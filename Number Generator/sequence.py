@@ -17,11 +17,15 @@ import pandas as pd
 #
 ####################################################################
 
+
 class sequence():
     # the constructor will build the entire sequence desired and assign 
-    # it to self.sequence. (the constructor does all the work)
-    def __init__(self, desired_length, num_states=4, probabilistic=True, initial=0):
-                        
+    # it to self.sequence. (i.e. the constructor does all the work)
+    def __init__(self, desired_length, num_states=4, probabilistic=True, initial=-1):
+        # if initial not passed in, it is chosen at random
+        if initial == -1:
+            initial = np.random.randint(0,4)
+        
         # desired length must (if you want something correct) be of 
         # form 12k + 1, where k is an int
         self.desired_length = desired_length
@@ -53,6 +57,24 @@ class sequence():
             
             # reset the adj matrix for the next block
             self.adj_matrix = np.zeros((self.num_states,self.num_states))   
+        
+        
+        # after building, we properly set up the adj_matrix
+        # note- this could be made more efficient by maintaining two matrices
+        transitions = np.zeros((4,4))
+        for i in range(self.desired_length -2):
+            transitions[self.sequence[i]][self.sequence[i+1]] +=1
+        self.adj_matrix = transitions
+        
+        # then we append the final state to make the sequence the desired length
+        for i in range(len(self.adj_matrix)):
+            for j in range(len(self.adj_matrix)):
+                if self.adj_matrix[i][j] == valid_transitions - 1:
+                    self.sequence.append(j)
+                    self.adj_matrix[i][j] += 1
+
+        print(self.adj_matrix)
+        #self.getTransitions()
 
             
     # this function finds the next state by attempting to greedily choose
@@ -80,12 +102,10 @@ class sequence():
         if len(next_candidate) == 1:
             return int(next_candidate[0])
         else:
-            pick = rm.randint(0,len(next_candidate) - 1)
+            pick = np.random.randint(0,len(next_candidate))
             next = next_candidate[pick]
             return int(next)
-    '''
-    # note to self--- check total string length, and accounting of previous states for transition matrix
-    '''
+   
     def __makeBlockProbabilistic(self, state, block):
         block.append(state)
     
@@ -114,7 +134,7 @@ class sequence():
     ####################################################################
      
     def getSequence(self):
-        print('The generated sequence for this instance is: /n{}'
+        print('The generated sequence for this instance is: \n{}\n'
               .format(self.sequence))
         
     def getCounts(self):
@@ -125,11 +145,11 @@ class sequence():
               .format(len(self.sequence)))
            
     def getTransitions(self):
-        transitions = np.zeros((4,4))
+        ### this code moved to constructor---
+        #transitions = np.zeros((4,4)) 
+        #for i in range(self.desired_length -2):
+        #    transitions[self.sequence[i]][self.sequence[i+1]] +=1
+        #df = pd.DataFrame(transitions)
         
-        for i in range(self.desired_length -2):
-            transitions[self.sequence[i]][self.sequence[i+1]] +=1
-    
-        df = pd.DataFrame(transitions)
         print('The number of transitions are in this matrix A, where ')
-        print('A(i,j) denotes transitions from i to j: \n\n{}'.format(df))
+        print('A(i,j) denotes transitions from i to j: \n\n{}'.format(self.adj_matrix))
